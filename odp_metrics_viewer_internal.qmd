@@ -1,5 +1,5 @@
 ---
-title: "CMAR Coastal Monitoring Program Highlights"
+title: "CMAR Coastal Monitoring Program User Statistics"
 format: 
   dashboard:
     orientation: columns
@@ -16,15 +16,42 @@ library(bslib)
 library(dplyr)
 library(ggplot2)
 library(here)
+library(lubridate)
 library(plotly)
 library(RColorBrewer)
+library(RSocrata)
 library(shiny)
 library(stringr)
 library(tidyr)
 
+source(here("functions/preprocess_user_stats.R"))
+#source("functions/preprocess_user_stats.R")
+
 theme_set(theme_light())
 
-dat_all <- readRDS(here("data/historical_access.RDS")) 
+#dat_all <- readRDS(here("data/historical_access.RDS")) 
+
+odp_api_config <- config::get(config = "default", file = "odp_api/config.yml")
+
+wq_metrics_url <- "https://data.novascotia.ca/api/v3/views/ktyz-sxuu/"
+adcp_metrics_url <- "https://data.novascotia.ca/api/v3/views/dv55-4vcp/"
+
+wq_metrics <- read.socrata(
+  wq_metrics_url,
+  app_token = odp_api_config$app_token,
+  email = odp_api_config$email,
+  password = odp_api_config$password
+) 
+
+adcp_metrics <- read.socrata(
+  adcp_metrics_url,
+  app_token = odp_api_config$app_token,
+  email = odp_api_config$email,
+  password = odp_api_config$password
+)
+
+dat_all <- bind_rows(wq_metrics, adcp_metrics) %>% 
+  preprocess_user_stats()
 
 pal <- c("#063E4D", "#62AECA")
 
@@ -41,10 +68,16 @@ selectInput(
   selected = "Water Quality"
 )
 
+# selectInput(
+#   "user_segment", "Select User", 
+#   choices = unique(dat_all$user_segment),
+#   selected = "anonymous"
+# )
+
 selectInput(
-  "user_segment", "Select User", 
-  choices = unique(dat_all$user_segment),
-  selected = "anonymous"
+  "data_product", "Select Data Product", 
+  choices = unique(dat_all$data_product),
+  selected = "dataset"
 )
 
 selectInput(
@@ -53,15 +86,10 @@ selectInput(
   selected = "download"
 )
 
-selectInput(
-  "data_product", "Select Data Product", 
-  choices = unique(dat_all$data_product),
-  selected = "dataset"
-)
 
 ```
 
-# Interactions
+# Dashboard
 
 ## 
 ```{r}
@@ -82,14 +110,6 @@ plotlyOutput("fig2")
 
 uiOutput("value_box_total")
 
-#textOutput("box_icon")
-
-# bslib::value_box(
-#   title = textOutput("box_title"),
-#   showcase = bs_icon(bx),
-#   value = textOutput("box_value"),
-#   theme = value_box_theme(bg = "#62AECA", fg = "#063E4D")
-# )
 ```
 :::
 
@@ -101,7 +121,7 @@ dat <- reactive({
   dat <- dat_all %>% 
     filter(
       program_branch == input$data_branch,
-      user_segment == input$user_segment,
+      #user_segment == input$user_segment,
       access_type == input$access_type,
       data_product == input$data_product
     ) 
@@ -115,8 +135,8 @@ output$fig1 <- renderPlotly({
     "Number of ",
     input$data_branch, " ",
     input$data_product, "\n", 
-    input$access_type, "s by ",
-    input$user_segment, " users"
+    input$access_type, "s"
+   # input$user_segment, " users"
   )
   
   dat_plot <- dat() %>% 
@@ -146,7 +166,7 @@ output$fig1 <- renderPlotly({
           input$data_branch, 
           input$data_product, 
           input$access_type,  
-          input$user_segment,
+        # input$user_segment,
           sep = "_"),
         width = 600, height = 800
       ))
@@ -158,12 +178,12 @@ output$fig2 <- renderPlotly({
     "Cumulative number of ",
     input$data_branch, " ",
     input$data_product, "\n", 
-    input$access_type, "s by ",
-    input$user_segment, " users"
+    input$access_type, "s"
+    #input$user_segment, " users"
   )
   
   dat_plot <- dat() %>%
-    arrange(timestamp_ns) %>% 
+    arrange(timestamp) %>% 
     group_by(asset_name) %>%
     mutate(n = cumsum(value)) %>% 
     ungroup()
@@ -173,10 +193,10 @@ output$fig2 <- renderPlotly({
   
   p <- ggplot(
     dat_plot, 
-    aes(timestamp_ns, n, col = asset_name, group = asset_name,
+    aes(timestamp, n, col = asset_name, group = asset_name,
         text = paste(
           "asset_name: ", asset_name, "\n",
-          "timestamp: ", timestamp_ns, "\n",
+          "timestamp: ", timestamp, "\n",
           "cumulative number: ", n
         ))
   ) +
@@ -197,7 +217,7 @@ output$fig2 <- renderPlotly({
           input$data_branch, 
           input$data_product, 
           input$access_type,  
-          input$user_segment,
+          #input$user_segment,
           sep = "_"),
         width = 1200, height = 600
       ))
@@ -211,8 +231,8 @@ box_title <- reactive({
     "Total ",
     input$data_branch, " ",
     input$data_product, "\n", 
-    input$access_type, "s by ",
-    input$user_segment, " users:"
+    input$access_type, "s"
+  #  input$user_segment, " users:"
   )
   
  return(box_title)
