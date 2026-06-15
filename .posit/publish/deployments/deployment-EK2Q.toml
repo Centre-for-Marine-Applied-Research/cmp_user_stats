@@ -2,7 +2,7 @@
 "$schema" = "https://cdn.posit.co/publisher/schemas/posit-publishing-record-schema-v3.json"
 server_type = "connect_cloud"
 server_url = "https://connect.posit.cloud"
-client_version = "1.37.22"
+client_version = "2.7.12"
 created_at = "2026-04-13T16:47:11.474Z"
 type = "quarto-static"
 configuration_name = "cmp_user_stats-AJHI"
@@ -10,8 +10,8 @@ id = "019d87be-2bbc-f423-cef6-494ef2d2cf14"
 dashboard_url = "https://connect.posit.cloud/cmar/content/019d87be-2bbc-f423-cef6-494ef2d2cf14"
 direct_url = "https://019d87be-2bbc-f423-cef6-494ef2d2cf14.share.connect.posit.cloud"
 logs_url = "https://connect.posit.cloud/cmar/content/019d87be-2bbc-f423-cef6-494ef2d2cf14/history"
-deployed_at = "2026-04-23T11:37:29.178Z"
-bundle_id = "019dba21-a535-0669-79b2-43808166ca14"
+deployed_at = "2026-06-15T16:12:23.579Z"
+bundle_id = "019ecc0c-eee4-3396-571c-be98ed979718"
 files = [
     ".posit/publish/cmp_user_stats-AJHI.toml",
     ".posit/publish/deployments/deployment-EK2Q.toml",
